@@ -1,0 +1,149 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  phone     String?
+  role      String   @default("customer")
+  createdAt DateTime @default(now())
+  addresses Address[]
+  orders    Order[]
+  carts     Cart[]
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  line1     String
+  line2     String?
+  city      String
+  province  String
+  postal    String
+  country   String   @default("ZA")
+  type      String   @default("shipping")
+}
+
+model Division {
+  id    String  @id @default(cuid())
+  name  String
+  slug  String  @unique
+  hero  String?
+  categories Category[]
+  products   Product[]
+}
+
+model Category {
+  id         String    @id @default(cuid())
+  name       String
+  slug       String    @unique
+  division   Division  @relation(fields: [divisionId], references: [id])
+  divisionId String
+  parentId   String?
+  products   Product[]
+}
+
+model Product {
+  id          String    @id @default(cuid())
+  sku         String    @unique
+  name        String
+  slug        String    @unique
+  description String?
+  price       Decimal   @db.Decimal(10,2)
+  compareAt   Decimal?  @db.Decimal(10,2)
+  status      String    @default("active")
+  taxClass    String?
+
+  division    Division  @relation(fields: [divisionId], references: [id])
+  divisionId  String
+  category    Category? @relation(fields: [categoryId], references: [id])
+  categoryId  String?
+
+  images      ProductImage[]
+  variants    ProductVariant[]
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  url       String
+  alt       String?
+  sort      Int      @default(0)
+}
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  options   Json
+  stockQty  Int      @default(0)
+  weight    Float?
+}
+
+model Cart {
+  id        String   @id @default(cuid())
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+  status    String   @default("active")
+  totals    Json?
+  items     CartItem[]
+  createdAt DateTime @default(now())
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  cart      Cart    @relation(fields: [cartId], references: [id])
+  cartId    String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId String?
+  qty       Int     @default(1)
+  priceSnap Decimal @db.Decimal(10,2)
+}
+
+model Order {
+  id         String   @id @default(cuid())
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String?
+  totals     Json
+  status     String   @default("paid")
+  paymentRef String?
+  address    Address? @relation(fields: [deliveryAddressId], references: [id])
+  deliveryAddressId String?
+  createdAt  DateTime @default(now())
+  items      OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId String?
+  qty       Int     @default(1)
+  priceSnap Decimal @db.Decimal(10,2)
+}
+
+model Discount {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  type      String
+  value     Decimal  @db.Decimal(10,2)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  usageMax  Int?
+}

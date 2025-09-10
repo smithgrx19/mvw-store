@@ -1,0 +1,13 @@
+{
+  "name": "mvw-store",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "prisma"
+  ],
+  "scripts": {
+    "lint": "echo \"No root lint\"",
+    "test": "echo \"No root tests\""
+  }
+}
